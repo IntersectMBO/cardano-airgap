@@ -1,0 +1,22 @@
+# Contributing to the `cardano-airgap` project
+
+The `cardano-airgap` repo development is done primarily with Nix.
+
+The development environment can be entered with:
+
+```bash
+nix develop --no-pure-eval
+```
+
+## Roles and Responsibilities
+We maintain a [CODEOWNERS file](CODEOWNERS) which provides information who
+should review a contributing PR.  Note that you might need to get approvals
+from all code owners (even though GitHub doesn't give a way to enforce it).
+
+## Issues
+To report bugs and feature requests, please submit an Issue.
+
+## Pull Requests
+Pull requests may be made from a fork by non-codeowners.
+However, the CODEOWNERS reserve the exclusive right to decide what gets merged.
+If you have a feature request, consider submitting an issue first.

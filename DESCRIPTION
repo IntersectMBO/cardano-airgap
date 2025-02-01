@@ -1,0 +1,1 @@
+Builds an airgapped nixos boot image with credential-manager signing tools.
