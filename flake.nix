@@ -70,6 +70,7 @@
                 bech32
                 cardano-address
                 cardano-cli
+                cardano-hw-cli
                 cc-sign
                 pkgs.cryptsetup
                 disko

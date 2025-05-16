@@ -9,7 +9,7 @@ in rec {
   # Inputs packages, collected here for easier re-use throughout the flake
   inherit (self.inputs.credential-manager.packages.${system}) cc-sign orchestrator-cli tx-bundle;
   inherit (self.inputs.disko.packages.${system}) disko;
-  inherit (self.inputs.adawallet.legacyPackages.${system}) adawallet;
+  inherit (self.inputs.adawallet.legacyPackages.${system}) adawallet cardano-hw-cli;
 
   bech32 = capkgs.bech32-input-output-hk-cardano-node-10-3-1-b3f237b;
   cardano-address = capkgs."\"cardano-addresses:exe:cardano-address\"-IntersectMBO-cardano-addresses-4-0-0-3749045";
