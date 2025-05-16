@@ -21,7 +21,7 @@ in {
             content = {
               type = "filesystem";
               format = "ext4";
-              extraArgs = ["-L ${publicVolName}" "-E root_owner=${uidGid}"];
+              extraArgs = ["-L" "${publicVolName}" "-E" "root_owner=${uidGid}"];
             };
           };
 
@@ -65,7 +65,7 @@ in {
               content = {
                 type = "filesystem";
                 format = "ext4";
-                extraArgs = ["-L ${encryptedVolName}" "-E root_owner=${uidGid}"];
+                extraArgs = ["-L" "${encryptedVolName}" "-E" "root_owner=${uidGid}"];
               };
             };
           };

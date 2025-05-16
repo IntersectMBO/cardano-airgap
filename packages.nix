@@ -93,7 +93,8 @@ in rec {
       fi
 
       sudo disko \
-      -m disko \
+      -m destroy,format,mount \
+      --yes-wipe-all-disks \
       /etc/${etcFlakePath}/airgap-disko.nix \
       "$@"
     '';
