@@ -82,7 +82,7 @@ in {
         cfssl
         cryptsetup
         glibc
-        gnome.adwaita-icon-theme
+        adwaita-icon-theme
         gnupg
         jq
         lvm2
@@ -211,6 +211,17 @@ in {
       ACTION=="add", SUBSYSTEM=="thunderbolt", ATTR{authorized}=="0", ATTR{authorized}="1"
     '';
   };
+
+  environment.etc."xdg/autostart/gnome-console.desktop".text = ''
+    [Desktop Entry]
+    Type=Application
+    Name=Console
+    Exec=kgx
+    X-GNOME-Autostart-enabled=true
+    NoDisplay=false
+    Terminal=false
+    Hidden=false
+  '';
 
   systemd.user.services.dconf-defaults = {
     script = let
