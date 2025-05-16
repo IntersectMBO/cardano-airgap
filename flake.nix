@@ -3,6 +3,9 @@
     # Nixpkgs 24.11 for latest gnome image and devenv hooks
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-24.11";
 
+    # For latest package versions when required
+    # nixpkgs-unstable.url = "github:NixOS/nixpkgs/nixos-unstable";
+
     # Required image signing tooling
     credential-manager.url = "github:IntersectMBO/credential-manager";
     systems.url = "github:nix-systems/default";
@@ -37,6 +40,7 @@
   outputs = {
     self,
     nixpkgs,
+    # nixpkgs-unstable,
     devenv,
     systems,
     ...
@@ -55,6 +59,7 @@
       forEachSystem
       (system: let
         pkgs = nixpkgs.legacyPackages.${system};
+        # pkgs-unstable = nixpkgs-unstable.legacyPackages.${system};
       in {
         default = devenv.lib.mkShell {
           inherit inputs pkgs;
@@ -71,7 +76,8 @@
                 orchestrator-cli
                 qemu-run-iso
                 tx-bundle
-                pkgs.ventoy
+                # Until binary blobs are addressed and ventoy is set back to OSS license
+                # pkgs-unstable.ventoy-full
               ];
 
               # https://devenv.sh/reference/options/
