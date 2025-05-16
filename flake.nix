@@ -77,7 +77,7 @@
               # https://devenv.sh/reference/options/
               languages.nix.enable = true;
 
-              pre-commit.hooks = {
+              git-hooks.hooks = {
                 alejandra.enable = true;
                 deadnix.enable = true;
                 statix.enable = true;
