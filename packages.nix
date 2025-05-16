@@ -133,7 +133,8 @@ in rec {
       echo "  orchestrator-cli"
       echo "  pwgen"
       echo "  shutdown"
-      echo "  signing-tool-with-config"
+      # Deprecated
+      # echo "  signing-tool-with-config"
       echo "  step"
       echo "  tx-bundle"
       echo "  unmount-airgap-data"
@@ -181,20 +182,21 @@ in rec {
     '';
   };
 
-  signing-tool-with-config = pkgs.writeShellApplication {
-    name = "signing-tool-with-config";
-    runtimeInputs = [cc-sign];
+  # Deprecated
+  # signing-tool-with-config = pkgs.writeShellApplication {
+  #   name = "signing-tool-with-config";
+  #   runtimeInputs = [signing-tool];
 
-    text = ''
-      cc-sign --config-file /etc/signing-tool-config.json "$@" &> /dev/null || {
-        echo "ERROR: Has the airgap-data device already been mounted?"
-        echo "       If not, once the airgap-data device is mounted, try again."
-        echo
-        echo "If needed, debug output can be seen by running:"
-        echo "  signing-tool --config-file /etc/signing-tool-config.json"
-      }
-    '';
-  };
+  #   text = ''
+  #     cc-sign --config-file /etc/signing-tool-config.json "$@" &> /dev/null || {
+  #       echo "ERROR: Has the airgap-data device already been mounted?"
+  #       echo "       If not, once the airgap-data device is mounted, try again."
+  #       echo
+  #       echo "If needed, debug output can be seen by running:"
+  #       echo "  signing-tool --config-file /etc/signing-tool-config.json"
+  #     }
+  #   '';
+  # };
 
   unmount-airgap-data = pkgs.writeShellApplication {
     name = "unmount-airgap-data";

@@ -54,9 +54,10 @@ in {
       # Embed this flake source in the iso to re-use the disko or other configuration
       ${etcFlakePath}.source = self.outPath;
 
-      "signing-tool-config.json".source = builtins.toFile "signing-tool-config.json" (builtins.toJSON {
-        inherit documentsDir secretsDir;
-      });
+      # Deprecated: signing-tool
+      # "signing-tool-config.json".source = builtins.toFile "signing-tool-config.json" (builtins.toJSON {
+      #   inherit documentsDir secretsDir;
+      # });
     };
 
     systemPackages = with self.packages.${system};
@@ -71,7 +72,8 @@ in {
         format-airgap-data
         menu
         orchestrator-cli
-        signing-tool-with-config
+        # Deprecated: signing-tool
+        # signing-tool-with-config
         tx-bundle
         unmount-airgap-data
         shutdown
