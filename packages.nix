@@ -9,11 +9,11 @@ in rec {
   # Inputs packages, collected here for easier re-use throughout the flake
   inherit (self.inputs.credential-manager.packages.${system}) cc-sign orchestrator-cli tx-bundle;
   inherit (self.inputs.disko.packages.${system}) disko;
-  inherit (self.inputs.adawallet.legacyPackages.${system}) adawallet cardano-hw-cli;
+
+  # Cardano-cli should remain version matched to adawallet to avoid wrapper errors
+  inherit (self.inputs.adawallet.packages.${system}) adawallet cardano-address cardano-cli cardano-hw-cli;
 
   bech32 = capkgs.bech32-input-output-hk-cardano-node-10-3-1-b3f237b;
-  cardano-address = capkgs."\"cardano-addresses:exe:cardano-address\"-IntersectMBO-cardano-addresses-4-0-0-3749045";
-  cardano-cli = capkgs.cardano-cli-input-output-hk-cardano-node-10-3-1-b3f237b;
 
   # Repo defined packages
   format-airgap-data = pkgs.writeShellApplication {
