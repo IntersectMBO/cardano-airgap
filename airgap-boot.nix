@@ -79,7 +79,7 @@ in {
         cfssl
         cryptsetup
         glibc
-        gnome3.adwaita-icon-theme
+        gnome.adwaita-icon-theme
         gnupg
         jq
         lvm2
@@ -135,7 +135,7 @@ in {
 
   programs = {
     bash = {
-      enableCompletion = true;
+      completion.enable = true;
       interactiveShellInit = lib.getExe self.packages.${system}.menu;
     };
 
