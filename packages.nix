@@ -9,6 +9,7 @@ in rec {
   # Inputs packages, collected here for easier re-use throughout the flake
   inherit (self.inputs.credential-manager.packages.${system}) orchestrator-cli signing-tool;
   inherit (self.inputs.disko.packages.${system}) disko;
+  inherit (self.inputs.adawallet.legacyPackages.${system}) adawallet;
 
   bech32 = capkgs.bech32-input-output-hk-cardano-node-9-0-0-2820a63;
   cardano-address = capkgs.cardano-address-cardano-foundation-cardano-wallet-v2024-07-07-29e3aef;

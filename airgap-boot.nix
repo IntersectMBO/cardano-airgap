@@ -61,6 +61,7 @@ in {
 
     systemPackages = with self.packages.${system};
       [
+        adawallet
         bech32
         cardano-address
         cardano-cli

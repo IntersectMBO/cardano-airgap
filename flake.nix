@@ -15,6 +15,8 @@
     disko.url = "github:nix-community/disko";
     disko.inputs.nixpkgs.follows = "nixpkgs";
 
+    adawallet.url = "github:input-output-hk/adawallet";
+
     # For fetch-closure shrunk release packages with minimal eval time and dependency sizes
     # Currently x86_64-linux only
     capkgs.url = "github:input-output-hk/capkgs";
@@ -58,6 +60,7 @@
           modules = [
             {
               packages = with self.packages.${system}; [
+                adawallet
                 bech32
                 cardano-address
                 cardano-cli
