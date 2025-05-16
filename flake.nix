@@ -1,21 +1,22 @@
 {
   inputs = {
-    # Nixpkgs 24.05 for latest gnome image and devenv hooks
-    nixpkgs.url = "github:NixOS/nixpkgs/nixos-24.05";
+    # Nixpkgs 24.11 for latest gnome image and devenv hooks
+    nixpkgs.url = "github:NixOS/nixpkgs/nixos-24.11";
 
     # Required image signing tooling
     credential-manager.url = "github:IntersectMBO/credential-manager";
     systems.url = "github:nix-systems/default";
 
     # For easy language and hook support
-    devenv.url = "github:cachix/devenv";
+    devenv.url = "github:cachix/devenv/v1.6.1";
     devenv.inputs.nixpkgs.follows = "nixpkgs";
 
     # For declarative block device provisioning
     disko.url = "github:nix-community/disko";
     disko.inputs.nixpkgs.follows = "nixpkgs";
 
-    adawallet.url = "github:input-output-hk/adawallet";
+    # A single address wallet that supports mnemonics and hardware wallets
+    adawallet.url = "github:input-output-hk/adawallet/jl/update";
 
     # For fetch-closure shrunk release packages with minimal eval time and dependency sizes
     # Currently x86_64-linux only
@@ -64,11 +65,12 @@
                 bech32
                 cardano-address
                 cardano-cli
+                cc-sign
                 pkgs.cryptsetup
                 disko
                 orchestrator-cli
                 qemu-run-iso
-                signing-tool
+                tx-bundle
                 pkgs.ventoy
               ];
 
