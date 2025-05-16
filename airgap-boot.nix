@@ -65,12 +65,13 @@ in {
         bech32
         cardano-address
         cardano-cli
+        cc-sign
         disko
         format-airgap-data
         menu
         orchestrator-cli
-        signing-tool
         signing-tool-with-config
+        tx-bundle
         unmount-airgap-data
         shutdown
       ]

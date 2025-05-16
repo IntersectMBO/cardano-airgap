@@ -7,7 +7,7 @@ self: system: let
   capkgs = self.inputs.capkgs.packages.${system};
 in rec {
   # Inputs packages, collected here for easier re-use throughout the flake
-  inherit (self.inputs.credential-manager.packages.${system}) orchestrator-cli signing-tool;
+  inherit (self.inputs.credential-manager.packages.${system}) cc-sign orchestrator-cli tx-bundle;
   inherit (self.inputs.disko.packages.${system}) disko;
   inherit (self.inputs.adawallet.legacyPackages.${system}) adawallet;
 
@@ -125,6 +125,7 @@ in rec {
       echo "  bech32"
       echo "  cardano-address"
       echo "  cardano-cli"
+      echo "  cc-sign"
       echo "  cfssl"
       echo "  format-airgap-data"
       echo "  menu"
@@ -132,9 +133,9 @@ in rec {
       echo "  orchestrator-cli"
       echo "  pwgen"
       echo "  shutdown"
-      echo "  signing-tool"
       echo "  signing-tool-with-config"
       echo "  step"
+      echo "  tx-bundle"
       echo "  unmount-airgap-data"
     '';
   };
@@ -182,10 +183,10 @@ in rec {
 
   signing-tool-with-config = pkgs.writeShellApplication {
     name = "signing-tool-with-config";
-    runtimeInputs = [signing-tool];
+    runtimeInputs = [cc-sign];
 
     text = ''
-      signing-tool --config-file /etc/signing-tool-config.json "$@" &> /dev/null || {
+      cc-sign --config-file /etc/signing-tool-config.json "$@" &> /dev/null || {
         echo "ERROR: Has the airgap-data device already been mounted?"
         echo "       If not, once the airgap-data device is mounted, try again."
         echo
