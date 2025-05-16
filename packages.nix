@@ -11,9 +11,9 @@ in rec {
   inherit (self.inputs.disko.packages.${system}) disko;
   inherit (self.inputs.adawallet.legacyPackages.${system}) adawallet;
 
-  bech32 = capkgs.bech32-input-output-hk-cardano-node-9-0-0-2820a63;
-  cardano-address = capkgs.cardano-address-cardano-foundation-cardano-wallet-v2024-07-07-29e3aef;
-  cardano-cli = capkgs."cardano-cli-input-output-hk-cardano-node-9-1-0-176f99e";
+  bech32 = capkgs.bech32-input-output-hk-cardano-node-10-3-1-b3f237b;
+  cardano-address = capkgs."\"cardano-addresses:exe:cardano-address\"-IntersectMBO-cardano-addresses-4-0-0-3749045";
+  cardano-cli = capkgs.cardano-cli-input-output-hk-cardano-node-10-3-1-b3f237b;
 
   # Repo defined packages
   format-airgap-data = pkgs.writeShellApplication {
