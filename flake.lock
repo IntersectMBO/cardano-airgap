@@ -78,11 +78,11 @@
         "systems": "systems"
       },
       "locked": {
-        "lastModified": 1747418066,
-        "narHash": "sha256-ZRBVm3McpizryKM2ObZblbcut1EpmJEvahut+HrQrhU=",
+        "lastModified": 1747726418,
+        "narHash": "sha256-qbJBFEmTars9YIgW+WtpOQSVkJDSjDqhpIebdExjIDY=",
         "owner": "input-output-hk",
         "repo": "adawallet",
-        "rev": "769eb46ce8a8c043ab0dc56658972191d77877cd",
+        "rev": "92d15c4bf6bc03694a205427b3b25723f83f850e",
         "type": "github"
       },
       "original": {
