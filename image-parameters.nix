@@ -2,7 +2,7 @@
   imageParameters = rec {
     # Set to true when ready to generate and distribute an image
     # so that image compression is used.
-    prodImage = false;
+    prodImage = true;
 
     # This will add significant eval time and size to the image,
     # but may fix a problem if a flake related nix operation
