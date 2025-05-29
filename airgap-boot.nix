@@ -104,7 +104,7 @@ in {
 
   # Used by starship for fonts
   fonts.packages = with pkgs; [
-    (nerdfonts.override {fonts = ["FiraCode"];})
+    nerd-fonts.fira-code
   ];
 
   # Disable squashfs for testing only
@@ -149,6 +149,7 @@ in {
 
     starship = {
       enable = true;
+      presets = ["nerd-font-symbols"];
       settings = {
         git_commit = {
           tag_disabled = false;
