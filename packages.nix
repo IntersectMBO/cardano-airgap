@@ -13,6 +13,8 @@ in rec {
 
   bech32 = capkgs.bech32-input-output-hk-cardano-node-10-3-1-b3f237b;
 
+  default = iso;
+
   # Repo defined packages
   format-airgap-data = pkgs.writeShellApplication {
     name = "format-airgap-data";
@@ -98,6 +100,8 @@ in rec {
     '';
   };
 
+  iso = self.nixosConfigurations.airgap-boot.config.system.build.isoImage;
+
   menu = pkgs.writeShellApplication {
     name = "menu";
     runtimeInputs = with pkgs; [nushell];
@@ -126,16 +130,6 @@ in rec {
     '';
   };
 
-  shutdown = pkgs.writeShellApplication {
-    name = "shutdown";
-    runtimeInputs = with pkgs; [unmount-airgap-data];
-
-    text = ''
-      unmount-airgap-data
-      systemctl poweroff -i
-    '';
-  };
-
   qemu-run-iso = pkgs.writeShellApplication {
     name = "qemu-run-iso";
     runtimeInputs = with pkgs; [fd qemu_kvm];
@@ -147,7 +141,7 @@ in rec {
         echo
       else
         echo "No iso file exists to run, please build one first, example:"
-        echo "  nix build -L .#nixosConfigurations.airgap-boot.config.system.build.isoImage"
+        echo "  nix build -L .#iso"
         exit
       fi
 
@@ -164,6 +158,16 @@ in rec {
         -device ahci,id=achi0 \
         -device ide-cd,bus=achi0.0,drive=drive-cd1,id=cd1,bootindex=1 \
         "$@"
+    '';
+  };
+
+  shutdown = pkgs.writeShellApplication {
+    name = "shutdown";
+    runtimeInputs = [unmount-airgap-data];
+
+    text = ''
+      unmount-airgap-data
+      systemctl poweroff -i
     '';
   };
 

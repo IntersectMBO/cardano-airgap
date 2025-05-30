@@ -1,6 +1,6 @@
 ## Build the airgap-boot disk image:
 ```bash
-$ nix build .#nixosConfigurations.airgap-boot.config.system.build.isoImage
+$ nix build .#iso
 ```
 
 ## Test the airgap-boot image:
