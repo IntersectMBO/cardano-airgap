@@ -1,7 +1,5 @@
 self: system: let
   inherit (self.imageParameters) documentsDir etcFlakePath secretsDir;
-  inherit (builtins) attrValues;
-  inherit (self.lib) concatMap concatStringsSep unique;
 
   pkgs = self.inputs.nixpkgs.legacyPackages.${system};
   capkgs = self.inputs.capkgs.packages.${system};
@@ -99,20 +97,6 @@ in rec {
       "$@"
     '';
   };
-
-  flakeClosureRef = flake: let
-    flakesClosure = flakes:
-      if flakes == []
-      then []
-      else
-        unique (flakes
-          ++ flakesClosure (concatMap (flake:
-            if flake ? inputs
-            then attrValues flake.inputs
-            else [])
-          flakes));
-  in
-    pkgs.writeText "flake-closure" (concatStringsSep "\n" (flakesClosure [flake]) + "\n");
 
   menu = pkgs.writeShellApplication {
     name = "menu";

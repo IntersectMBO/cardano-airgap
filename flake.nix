@@ -8,7 +8,6 @@
 
     # Required image signing tooling
     credential-manager.url = "github:IntersectMBO/credential-manager";
-    systems.url = "github:nix-systems/default";
 
     # For easy language and hook support
     devenv.url = "github:cachix/devenv/v1.6.1";
@@ -42,13 +41,20 @@
     nixpkgs,
     # nixpkgs-unstable,
     devenv,
-    systems,
     ...
   } @ inputs: let
-    forEachSystem = nixpkgs.lib.genAttrs (import systems);
-  in {
-    # For direnv nix version shell evaluation
     inherit (nixpkgs) lib;
+    inherit (lib) collect isDerivation genAttrs nixosSystem;
+
+    # Several required devShell/cli binaries and the ISO only build for
+    # x86_64-linux.  Limit to this arch for now; expand later as needed.
+    systems = ["x86_64-linux"];
+
+    forEachSystem = genAttrs systems;
+    pkgs = system: nixpkgs.legacyPackages.${system};
+  in rec {
+    # For direnv nix version shell evaluation
+    inherit lib;
 
     # General image parameters used throughout nix code
     inherit (import ./image-parameters.nix) imageParameters;
@@ -57,12 +63,10 @@
 
     devShells =
       forEachSystem
-      (system: let
-        pkgs = nixpkgs.legacyPackages.${system};
-        # pkgs-unstable = nixpkgs-unstable.legacyPackages.${system};
-      in {
+      (system: {
         default = devenv.lib.mkShell {
-          inherit inputs pkgs;
+          inherit inputs;
+          pkgs = pkgs system;
           modules = [
             {
               packages = with self.packages.${system}; [
@@ -72,13 +76,13 @@
                 cardano-cli
                 cardano-hw-cli
                 cc-sign
-                pkgs.cryptsetup
+                (pkgs system).cryptsetup
                 disko
                 orchestrator-cli
                 qemu-run-iso
                 tx-bundle
                 # Until binary blobs are addressed and ventoy is set back to OSS license
-                # pkgs-unstable.ventoy-full
+                # (pkgs-system).ventoy-full
               ];
 
               # https://devenv.sh/reference/options/
@@ -94,7 +98,7 @@
         };
       });
 
-    nixosConfigurations.airgap-boot = nixpkgs.lib.nixosSystem {
+    nixosConfigurations.airgap-boot = nixosSystem {
       system = "x86_64-linux";
       modules = [./airgap-boot.nix];
       specialArgs = {
@@ -104,5 +108,18 @@
     };
 
     diskoConfigurations.airgap-data = import ./airgap-data.nix self;
+
+    hydraJobs =
+      forEachSystem
+      (system: let
+        jobs = {inherit packages;};
+      in
+        jobs
+        // {
+          required = (pkgs system).releaseTools.aggregate {
+            name = "required";
+            constituents = collect isDerivation jobs;
+          };
+        });
   };
 }

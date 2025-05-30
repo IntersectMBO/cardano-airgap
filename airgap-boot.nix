@@ -8,7 +8,6 @@
 }: let
   inherit
     (self.imageParameters)
-    embedFlakeDeps
     etcFlakePath
     hostId
     hostName
@@ -289,16 +288,5 @@ in {
     };
   };
 
-  system = {
-    # This works to enable flake based disko builds within the image,
-    # but adds significant eval time and size for image generation.
-    #
-    # Alternatively, the disko builds can be done using the
-    # airgap-disko.nix configuration from within the image without
-    # requiring the flake closure dependencies.
-    extraDependencies = lib.mkIf embedFlakeDeps [(self.packages.${system}.flakeClosureRef self)];
-
-    # To address build time warn
-    stateVersion = lib.versions.majorMinor lib.version;
-  };
+  system.stateVersion = lib.versions.majorMinor lib.version;
 }
