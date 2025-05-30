@@ -1,5 +1,7 @@
 self: system: let
   inherit (self.imageParameters) documentsDir etcFlakePath secretsDir;
+  inherit (self.lib) filter hasSuffix head;
+  inherit (builtins) attrNames readDir;
 
   pkgs = self.inputs.nixpkgs.legacyPackages.${system};
   capkgs = self.inputs.capkgs.packages.${system};
@@ -100,7 +102,25 @@ in rec {
     '';
   };
 
-  iso = self.nixosConfigurations.airgap-boot.config.system.build.isoImage;
+  iso = let
+    inherit (self.nixosConfigurations.airgap-boot.config.system.build) isoImage;
+
+    isoName' = head (filter
+      (p: hasSuffix ".iso" p)
+      (attrNames (readDir "${isoImage}/iso")));
+
+    isoName = "airgap-boot-${shortRev}-${isoName'}";
+
+    shortRev = self.sourceInfo.shortRev or "dirty";
+  in
+    pkgs.runCommand isoName {} ''
+      mkdir -p "$out/iso"
+      mkdir -p "$out/nix-support"
+
+      ln -s "${isoImage}/iso/${isoName'}" "$out/iso/${isoName}"
+      echo "file iso $out/iso/${isoName}" > "$out/nix-support/hydra-build-products"
+      echo "${system}" > "$out/nix-support/system"
+    '';
 
   menu = pkgs.writeShellApplication {
     name = "menu";
@@ -135,9 +155,9 @@ in rec {
     runtimeInputs = with pkgs; [fd qemu_kvm];
 
     text = ''
-      if fd --type file --has-results 'nixos-.*\.iso' result/iso 2> /dev/null; then
+      if fd --type symlink --has-results 'airgap-boot-.*\.iso' result/iso 2> /dev/null; then
         echo "Symlinking the existing iso image for qemu:"
-        ln -sfv result/iso/nixos-*.iso result-iso
+        ln -sfv result/iso/airgap-boot-*.iso result-iso
         echo
       else
         echo "No iso file exists to run, please build one first, example:"
