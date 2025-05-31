@@ -117,7 +117,9 @@ in rec {
       mkdir -p "$out/iso"
       mkdir -p "$out/nix-support"
 
-      ln -s "${isoImage}/iso/${isoName'}" "$out/iso/${isoName}"
+      # Copy rather than symlink so hydra download links show size and sha256 hash
+      cp "${isoImage}/iso/${isoName'}" "$out/iso/${isoName}"
+
       echo "file iso $out/iso/${isoName}" > "$out/nix-support/hydra-build-products"
       echo "${system}" > "$out/nix-support/system"
     '';
@@ -155,7 +157,7 @@ in rec {
     runtimeInputs = with pkgs; [fd qemu_kvm];
 
     text = ''
-      if fd --type symlink --has-results 'airgap-boot-.*\.iso' result/iso 2> /dev/null; then
+      if fd --type file --has-results 'airgap-boot-.*\.iso' result/iso 2> /dev/null; then
         echo "Symlinking the existing iso image for qemu:"
         ln -sfv result/iso/airgap-boot-*.iso result-iso
         echo
