@@ -133,9 +133,11 @@ in rec {
         '"Welcome to the Airgap Shell" | ansi gradient --fgstart "0xffffff" --fgend "0xffffff" --bgstart "0x0000ff" --bgend "0xff0000"'
       echo
       echo "Some commands available are:"
+      echo "  adawallet"
       echo "  bech32"
       echo "  cardano-address"
       echo "  cardano-cli"
+      echo "  cardano-hw-cli"
       echo "  cc-sign"
       echo "  cfssl"
       echo "  format-airgap-data"
