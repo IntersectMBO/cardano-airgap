@@ -18,7 +18,7 @@
     disko.inputs.nixpkgs.follows = "nixpkgs";
 
     # A single address wallet that supports mnemonics and hardware wallets
-    adawallet.url = "github:input-output-hk/adawallet/jl/update";
+    adawallet.url = "github:input-output-hk/adawallet";
 
     # For fetch-closure shrunk release packages with minimal eval time and dependency sizes
     # Currently x86_64-linux only

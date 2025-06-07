@@ -78,16 +78,15 @@
         "systems": "systems"
       },
       "locked": {
-        "lastModified": 1748840311,
-        "narHash": "sha256-URRa2M3oYGMGFzBUCTJva9ihfSY6Fv/q7im+6DX8xew=",
+        "lastModified": 1749257489,
+        "narHash": "sha256-IHiQrPlHO0L+K9LXfXItKHCSQ6NkIZr3Fk5dTZjBvOQ=",
         "owner": "input-output-hk",
         "repo": "adawallet",
-        "rev": "56419bb0e9825a51be7208417750e0be13bcb7cf",
+        "rev": "a05a80f409de50f683402f9cabae9c6c5ba3cdd1",
         "type": "github"
       },
       "original": {
         "owner": "input-output-hk",
-        "ref": "jl/update",
         "repo": "adawallet",
         "type": "github"
       }
