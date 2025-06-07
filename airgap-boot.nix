@@ -8,7 +8,6 @@
 }: let
   inherit
     (self.imageParameters)
-    embedFlakeDeps
     etcFlakePath
     hostId
     hostName
@@ -54,22 +53,27 @@ in {
       # Embed this flake source in the iso to re-use the disko or other configuration
       ${etcFlakePath}.source = self.outPath;
 
-      "signing-tool-config.json".source = builtins.toFile "signing-tool-config.json" (builtins.toJSON {
-        inherit documentsDir secretsDir;
-      });
+      # Deprecated: signing-tool
+      # "signing-tool-config.json".source = builtins.toFile "signing-tool-config.json" (builtins.toJSON {
+      #   inherit documentsDir secretsDir;
+      # });
     };
 
     systemPackages = with self.packages.${system};
       [
+        adawallet
         bech32
         cardano-address
         cardano-cli
+        cardano-hw-cli
+        cc-sign
         disko
         format-airgap-data
         menu
         orchestrator-cli
-        signing-tool
-        signing-tool-with-config
+        # Deprecated: signing-tool
+        # signing-tool-with-config
+        tx-bundle
         unmount-airgap-data
         shutdown
       ]
@@ -77,7 +81,7 @@ in {
         cfssl
         cryptsetup
         glibc
-        gnome3.adwaita-icon-theme
+        adwaita-icon-theme
         gnupg
         jq
         lvm2
@@ -99,7 +103,7 @@ in {
 
   # Used by starship for fonts
   fonts.packages = with pkgs; [
-    (nerdfonts.override {fonts = ["FiraCode"];})
+    nerd-fonts.fira-code
   ];
 
   # Disable squashfs for testing only
@@ -133,7 +137,7 @@ in {
 
   programs = {
     bash = {
-      enableCompletion = true;
+      completion.enable = true;
       interactiveShellInit = lib.getExe self.packages.${system}.menu;
     };
 
@@ -144,6 +148,7 @@ in {
 
     starship = {
       enable = true;
+      presets = ["nerd-font-symbols"];
       settings = {
         git_commit = {
           tag_disabled = false;
@@ -182,20 +187,41 @@ in {
     displayManager.autoLogin.user = lib.mkForce airgapUser;
 
     udev.extraRules = ''
-      SUBSYSTEMS=="usb", ATTRS{idVendor}=="2581", ATTRS{idProduct}=="1b7c", MODE="0660", TAG+="uaccess", TAG+="udev-acl"
-      SUBSYSTEMS=="usb", ATTRS{idVendor}=="2581", ATTRS{idProduct}=="2b7c", MODE="0660", TAG+="uaccess", TAG+="udev-acl"
-      SUBSYSTEMS=="usb", ATTRS{idVendor}=="2581", ATTRS{idProduct}=="3b7c", MODE="0660", TAG+="uaccess", TAG+="udev-acl"
-      SUBSYSTEMS=="usb", ATTRS{idVendor}=="2581", ATTRS{idProduct}=="4b7c", MODE="0660", TAG+="uaccess", TAG+="udev-acl"
-      SUBSYSTEMS=="usb", ATTRS{idVendor}=="2581", ATTRS{idProduct}=="1807", MODE="0660", TAG+="uaccess", TAG+="udev-acl"
-      SUBSYSTEMS=="usb", ATTRS{idVendor}=="2581", ATTRS{idProduct}=="1808", MODE="0660", TAG+="uaccess", TAG+="udev-acl"
-      SUBSYSTEMS=="usb", ATTRS{idVendor}=="2c97", ATTRS{idProduct}=="0000", MODE="0660", TAG+="uaccess", TAG+="udev-acl"
-      SUBSYSTEMS=="usb", ATTRS{idVendor}=="2c97", ATTRS{idProduct}=="0001", MODE="0660", TAG+="uaccess", TAG+="udev-acl"
-      SUBSYSTEMS=="usb", ATTRS{idVendor}=="2c97", ATTRS{idProduct}=="0004", MODE="0660", TAG+="uaccess", TAG+="udev-acl"
-      KERNEL=="hidraw*", SUBSYSTEM=="hidraw", MODE="0660", GROUP="plugdev", ATTRS{idVendor}=="2c97"
-      KERNEL=="hidraw*", SUBSYSTEM=="hidraw", MODE="0660", GROUP="plugdev", ATTRS{idVendor}=="2581"
+      # Ledger rules, source: https://github.com/LedgerHQ/udev-rules/blob/master/20-hw1.rules
+      # HW.1, Nano
+      SUBSYSTEMS=="usb", ATTRS{idVendor}=="2581", ATTRS{idProduct}=="1b7c|2b7c|3b7c|4b7c", TAG+="uaccess", TAG+="udev-acl"
+
+      # Blue, NanoS, Aramis, HW.2, Nano X, NanoSP, Stax, Ledger Test,
+      SUBSYSTEMS=="usb", ATTRS{idVendor}=="2c97", TAG+="uaccess", TAG+="udev-acl"
+
+      # Same, but with hidraw-based library (instead of libusb)
+      KERNEL=="hidraw*", ATTRS{idVendor}=="2c97", MODE="0666"
+
+      # Trezor rules, source: https://trezor.io/guides/trezorctl/udev-rules
+      # Trezor
+      SUBSYSTEM=="usb", ATTR{idVendor}=="534c", ATTR{idProduct}=="0001", MODE="0660", GROUP="plugdev", TAG+="uaccess", TAG+="udev-acl", SYMLINK+="trezor%n"
+      KERNEL=="hidraw*", ATTRS{idVendor}=="534c", ATTRS{idProduct}=="0001", MODE="0660", GROUP="plugdev", TAG+="uaccess", TAG+="udev-acl"
+
+      # Trezor v2
+      SUBSYSTEM=="usb", ATTR{idVendor}=="1209", ATTR{idProduct}=="53c0", MODE="0660", GROUP="plugdev", TAG+="uaccess", TAG+="udev-acl", SYMLINK+="trezor%n"
+      SUBSYSTEM=="usb", ATTR{idVendor}=="1209", ATTR{idProduct}=="53c1", MODE="0660", GROUP="plugdev", TAG+="uaccess", TAG+="udev-acl", SYMLINK+="trezor%n"
+      KERNEL=="hidraw*", ATTRS{idVendor}=="1209", ATTRS{idProduct}=="53c1", MODE="0660", GROUP="plugdev", TAG+="uaccess", TAG+="udev-acl"
+
+      # Thunderbolt support
       ACTION=="add", SUBSYSTEM=="thunderbolt", ATTR{authorized}=="0", ATTR{authorized}="1"
     '';
   };
+
+  environment.etc."xdg/autostart/gnome-console.desktop".text = ''
+    [Desktop Entry]
+    Type=Application
+    Name=Console
+    Exec=kgx
+    X-GNOME-Autostart-enabled=true
+    NoDisplay=false
+    Terminal=false
+    Hidden=false
+  '';
 
   systemd.user.services.dconf-defaults = {
     script = let
@@ -262,16 +288,5 @@ in {
     };
   };
 
-  system = {
-    # This works to enable flake based disko builds within the image,
-    # but adds significant eval time and size for image generation.
-    #
-    # Alternatively, the disko builds can be done using the
-    # airgap-disko.nix configuration from within the image without
-    # requiring the flake closure dependencies.
-    extraDependencies = lib.mkIf embedFlakeDeps [(self.packages.${system}.flakeClosureRef self)];
-
-    # To address build time warn
-    stateVersion = lib.versions.majorMinor lib.version;
-  };
+  system.stateVersion = lib.versions.majorMinor lib.version;
 }

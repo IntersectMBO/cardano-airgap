@@ -1,19 +1,24 @@
 {
   inputs = {
-    # Nixpkgs 24.05 for latest gnome image and devenv hooks
-    nixpkgs.url = "github:NixOS/nixpkgs/nixos-24.05";
+    # Nixpkgs 25.05 for latest gnome image and devenv hooks
+    nixpkgs.url = "github:NixOS/nixpkgs/nixos-25.05";
+
+    # For latest package versions when required
+    # nixpkgs-unstable.url = "github:NixOS/nixpkgs/nixos-unstable";
 
     # Required image signing tooling
     credential-manager.url = "github:IntersectMBO/credential-manager";
-    systems.url = "github:nix-systems/default";
 
     # For easy language and hook support
-    devenv.url = "github:cachix/devenv";
+    devenv.url = "github:cachix/devenv/v1.6.1";
     devenv.inputs.nixpkgs.follows = "nixpkgs";
 
     # For declarative block device provisioning
     disko.url = "github:nix-community/disko";
     disko.inputs.nixpkgs.follows = "nixpkgs";
+
+    # A single address wallet that supports mnemonics and hardware wallets
+    adawallet.url = "github:input-output-hk/adawallet";
 
     # For fetch-closure shrunk release packages with minimal eval time and dependency sizes
     # Currently x86_64-linux only
@@ -34,14 +39,22 @@
   outputs = {
     self,
     nixpkgs,
+    # nixpkgs-unstable,
     devenv,
-    systems,
     ...
   } @ inputs: let
-    forEachSystem = nixpkgs.lib.genAttrs (import systems);
-  in {
-    # For direnv nix version shell evaluation
     inherit (nixpkgs) lib;
+    inherit (lib) collect isDerivation genAttrs mapAttrs nixosSystem;
+
+    # Several required devShell/cli binaries and the ISO only build for
+    # x86_64-linux.  Limit to this arch for now; expand later as needed.
+    systems = ["x86_64-linux"];
+
+    forEachSystem = genAttrs systems;
+    pkgs = system: nixpkgs.legacyPackages.${system};
+  in rec {
+    # For direnv nix version shell evaluation
+    inherit lib;
 
     # General image parameters used throughout nix code
     inherit (import ./image-parameters.nix) imageParameters;
@@ -50,29 +63,32 @@
 
     devShells =
       forEachSystem
-      (system: let
-        pkgs = nixpkgs.legacyPackages.${system};
-      in {
+      (system: {
         default = devenv.lib.mkShell {
-          inherit inputs pkgs;
+          inherit inputs;
+          pkgs = pkgs system;
           modules = [
             {
               packages = with self.packages.${system}; [
+                adawallet
                 bech32
                 cardano-address
                 cardano-cli
-                pkgs.cryptsetup
+                cardano-hw-cli
+                cc-sign
+                (pkgs system).cryptsetup
                 disko
                 orchestrator-cli
                 qemu-run-iso
-                signing-tool
-                pkgs.ventoy
+                tx-bundle
+                # Until binary blobs are addressed and ventoy is set back to OSS license
+                # (pkgs-system).ventoy-full
               ];
 
               # https://devenv.sh/reference/options/
               languages.nix.enable = true;
 
-              pre-commit.hooks = {
+              git-hooks.hooks = {
                 alejandra.enable = true;
                 deadnix.enable = true;
                 statix.enable = true;
@@ -82,7 +98,7 @@
         };
       });
 
-    nixosConfigurations.airgap-boot = nixpkgs.lib.nixosSystem {
+    nixosConfigurations.airgap-boot = nixosSystem {
       system = "x86_64-linux";
       modules = [./airgap-boot.nix];
       specialArgs = {
@@ -92,5 +108,24 @@
     };
 
     diskoConfigurations.airgap-data = import ./airgap-data.nix self;
+
+    hydraJobs =
+      forEachSystem
+      (system: let
+        jobs = {
+          nixosConfigurations =
+            mapAttrs
+            (_: {config, ...}: config.system.build.toplevel)
+            self.nixosConfigurations;
+          inherit packages;
+        };
+      in
+        jobs
+        // {
+          required = (pkgs system).releaseTools.aggregate {
+            name = "required";
+            constituents = collect isDerivation jobs;
+          };
+        });
   };
 }

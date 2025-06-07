@@ -1,18 +1,21 @@
 self: system: let
   inherit (self.imageParameters) documentsDir etcFlakePath secretsDir;
-  inherit (builtins) attrValues;
-  inherit (self.lib) concatMap concatStringsSep unique;
+  inherit (self.lib) filter hasSuffix head;
+  inherit (builtins) attrNames readDir;
 
   pkgs = self.inputs.nixpkgs.legacyPackages.${system};
   capkgs = self.inputs.capkgs.packages.${system};
 in rec {
   # Inputs packages, collected here for easier re-use throughout the flake
-  inherit (self.inputs.credential-manager.packages.${system}) orchestrator-cli signing-tool;
+  inherit (self.inputs.credential-manager.packages.${system}) cc-sign orchestrator-cli tx-bundle;
   inherit (self.inputs.disko.packages.${system}) disko;
 
-  bech32 = capkgs.bech32-input-output-hk-cardano-node-9-0-0-2820a63;
-  cardano-address = capkgs.cardano-address-cardano-foundation-cardano-wallet-v2024-07-07-29e3aef;
-  cardano-cli = capkgs."cardano-cli-input-output-hk-cardano-node-9-1-0-176f99e";
+  # Cardano-cli should remain version matched to adawallet to avoid wrapper errors
+  inherit (self.inputs.adawallet.packages.${system}) adawallet cardano-address cardano-cli cardano-hw-cli;
+
+  bech32 = capkgs.bech32-input-output-hk-cardano-node-10-4-1-420c94f;
+
+  default = iso;
 
   # Repo defined packages
   format-airgap-data = pkgs.writeShellApplication {
@@ -92,25 +95,34 @@ in rec {
       fi
 
       sudo disko \
-      -m disko \
+      -m destroy,format,mount \
+      --yes-wipe-all-disks \
       /etc/${etcFlakePath}/airgap-disko.nix \
       "$@"
     '';
   };
 
-  flakeClosureRef = flake: let
-    flakesClosure = flakes:
-      if flakes == []
-      then []
-      else
-        unique (flakes
-          ++ flakesClosure (concatMap (flake:
-            if flake ? inputs
-            then attrValues flake.inputs
-            else [])
-          flakes));
+  iso = let
+    inherit (self.nixosConfigurations.airgap-boot.config.system.build) isoImage;
+
+    isoName' = head (filter
+      (p: hasSuffix ".iso" p)
+      (attrNames (readDir "${isoImage}/iso")));
+
+    isoName = "airgap-boot-${shortRev}-${isoName'}";
+
+    shortRev = self.sourceInfo.shortRev or "dirty";
   in
-    pkgs.writeText "flake-closure" (concatStringsSep "\n" (flakesClosure [flake]) + "\n");
+    pkgs.runCommand isoName {} ''
+      mkdir -p "$out/iso"
+      mkdir -p "$out/nix-support"
+
+      # Copy rather than symlink so hydra download links show size and sha256 hash
+      cp "${isoImage}/iso/${isoName'}" "$out/iso/${isoName}"
+
+      echo "file iso $out/iso/${isoName}" > "$out/nix-support/hydra-build-products"
+      echo "${system}" > "$out/nix-support/system"
+    '';
 
   menu = pkgs.writeShellApplication {
     name = "menu";
@@ -121,9 +133,12 @@ in rec {
         '"Welcome to the Airgap Shell" | ansi gradient --fgstart "0xffffff" --fgend "0xffffff" --bgstart "0x0000ff" --bgend "0xff0000"'
       echo
       echo "Some commands available are:"
+      echo "  adawallet"
       echo "  bech32"
       echo "  cardano-address"
       echo "  cardano-cli"
+      echo "  cardano-hw-cli"
+      echo "  cc-sign"
       echo "  cfssl"
       echo "  format-airgap-data"
       echo "  menu"
@@ -131,20 +146,11 @@ in rec {
       echo "  orchestrator-cli"
       echo "  pwgen"
       echo "  shutdown"
-      echo "  signing-tool"
-      echo "  signing-tool-with-config"
+      # Deprecated
+      # echo "  signing-tool-with-config"
       echo "  step"
+      echo "  tx-bundle"
       echo "  unmount-airgap-data"
-    '';
-  };
-
-  shutdown = pkgs.writeShellApplication {
-    name = "shutdown";
-    runtimeInputs = with pkgs; [unmount-airgap-data];
-
-    text = ''
-      unmount-airgap-data
-      systemctl poweroff -i
     '';
   };
 
@@ -153,13 +159,13 @@ in rec {
     runtimeInputs = with pkgs; [fd qemu_kvm];
 
     text = ''
-      if fd --type file --has-results 'nixos-.*\.iso' result/iso 2> /dev/null; then
+      if fd --type file --has-results 'airgap-boot-.*\.iso' result/iso 2> /dev/null; then
         echo "Symlinking the existing iso image for qemu:"
-        ln -sfv result/iso/nixos-*.iso result-iso
+        ln -sfv result/iso/airgap-boot-*.iso result-iso
         echo
       else
         echo "No iso file exists to run, please build one first, example:"
-        echo "  nix build -L .#nixosConfigurations.airgap-boot.config.system.build.isoImage"
+        echo "  nix build -L .#iso"
         exit
       fi
 
@@ -179,20 +185,31 @@ in rec {
     '';
   };
 
-  signing-tool-with-config = pkgs.writeShellApplication {
-    name = "signing-tool-with-config";
-    runtimeInputs = [signing-tool];
+  shutdown = pkgs.writeShellApplication {
+    name = "shutdown";
+    runtimeInputs = [unmount-airgap-data];
 
     text = ''
-      signing-tool --config-file /etc/signing-tool-config.json "$@" &> /dev/null || {
-        echo "ERROR: Has the airgap-data device already been mounted?"
-        echo "       If not, once the airgap-data device is mounted, try again."
-        echo
-        echo "If needed, debug output can be seen by running:"
-        echo "  signing-tool --config-file /etc/signing-tool-config.json"
-      }
+      unmount-airgap-data
+      systemctl poweroff -i
     '';
   };
+
+  # Deprecated
+  # signing-tool-with-config = pkgs.writeShellApplication {
+  #   name = "signing-tool-with-config";
+  #   runtimeInputs = [signing-tool];
+
+  #   text = ''
+  #     cc-sign --config-file /etc/signing-tool-config.json "$@" &> /dev/null || {
+  #       echo "ERROR: Has the airgap-data device already been mounted?"
+  #       echo "       If not, once the airgap-data device is mounted, try again."
+  #       echo
+  #       echo "If needed, debug output can be seen by running:"
+  #       echo "  signing-tool --config-file /etc/signing-tool-config.json"
+  #     }
+  #   '';
+  # };
 
   unmount-airgap-data = pkgs.writeShellApplication {
     name = "unmount-airgap-data";

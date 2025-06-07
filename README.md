@@ -1,6 +1,6 @@
 ## Build the airgap-boot disk image:
 ```bash
-$ nix build .#nixosConfigurations.airgap-boot.config.system.build.isoImage
+$ nix build .#iso
 ```
 
 ## Test the airgap-boot image:
@@ -41,8 +41,8 @@ format-airgap-data --argstr device "$YOUR_AIRGAP_DATA_DRIVE"
 
 ### From the flake devShell of a networked machine:
 ```bash
-disko -m disko --dry-run -f .#airgap-data --argstr device "$YOUR_AIRGAP_DATA_DRIVE"
+disko -m destroy,format,mount --dry-run -f .#airgap-data --argstr device "$YOUR_AIRGAP_DATA_DRIVE"
 
 # If satisfied with the dry run script, proceed with the formatting:
-sudo disko -m disko -f .#airgap-data --argstr device "$YOUR_AIRGAP_DATA_DRIVE"
+sudo disko -m destroy,format,mount -f .#airgap-data --argstr device "$YOUR_AIRGAP_DATA_DRIVE"
 ```
