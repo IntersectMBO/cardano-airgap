@@ -44,7 +44,7 @@
     ...
   } @ inputs: let
     inherit (nixpkgs) lib;
-    inherit (lib) collect isDerivation genAttrs nixosSystem;
+    inherit (lib) collect isDerivation genAttrs mapAttrs nixosSystem;
 
     # Several required devShell/cli binaries and the ISO only build for
     # x86_64-linux.  Limit to this arch for now; expand later as needed.
@@ -112,7 +112,13 @@
     hydraJobs =
       forEachSystem
       (system: let
-        jobs = {inherit packages;};
+        jobs = {
+          nixosConfigurations =
+            mapAttrs
+            (_: {config, ...}: config.system.build.toplevel)
+            self.nixosConfigurations;
+          inherit packages;
+        };
       in
         jobs
         // {
