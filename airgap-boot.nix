@@ -1,4 +1,5 @@
 {
+  config,
   lib,
   modulesPath,
   pkgs,
@@ -106,9 +107,53 @@ in {
     nerd-fonts.fira-code
   ];
 
-  # Disable squashfs for testing only
-  # Set the flake.nix `imageParameters.prodImage = true;` when ready to build the distribution image to use image compression
-  isoImage.squashfsCompression = lib.mkIf (!prodImage) ((lib.warn "Generating a testing only ISO with compression disabled") null);
+  isoImage = {
+    # Making a hardlink of bzImage, initrd/initrd and /init at the ISO FS root,
+    # as well as setting a static volume ID will ensure external grub booting of
+    # the ISO can be done.
+    #
+    # An example for an ISO burned to a block device such as a USB thumb drive:
+    #
+    #   menuentry "Cardano Airgap ISO Block Device Boot" {
+    #     search --set=root --label cardano-airgap
+    #     linux /bzImage init=/init root=LABEL=cardano-airgap boot.shell_on_fail elevator=noop nohibernate splash loglevel=4 lsm=landlock,yama,bpf
+    #     initrd /initrd/initrd
+    #   }
+    #
+    # An example for an ISO file saved to boot time accessible storage, ex:
+    # fat32, ext2/3/4, where `BOOTDISK` label and `isofile` should be adjusted
+    # for the target machine's storage device and file path:
+    #
+    #  menuentry "Cardano Airgap ISO File Boot" {
+    #    search --set=root --label BOOTDISK
+    #
+    #    set isofile="/isos/cardano-airgap.iso"
+    #    loopback loop $root$isofile
+    #
+    #    linux (loop)/bzImage init=/init root=LABEL=cardano-airgap boot.shell_on_fail elevator=noop nohibernate splash loglevel=4 lsm=landlock,yama,bpf
+    #    initrd (loop)/initrd/initrd
+    #  }
+    contents = [
+      {
+        source = "${config.system.build.kernel}/bzImage";
+        target = "/bzImage";
+      }
+      {
+        source = "${config.system.build.initialRamdisk}";
+        target = "/initrd";
+      }
+      {
+        source = "${config.system.build.toplevel}/init";
+        target = "/init";
+      }
+    ];
+
+    volumeID = "cardano-airgap";
+
+    # Disable squashfs for testing only
+    # Set the flake.nix `imageParameters.prodImage = true;` when ready to build the distribution image to use image compression
+    squashfsCompression = lib.mkIf (!prodImage) ((lib.warn "Generating a testing only ISO with compression disabled") null);
+  };
 
   nix = {
     extraOptions = ''
