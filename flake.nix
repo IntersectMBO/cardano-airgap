@@ -69,21 +69,27 @@
           pkgs = pkgs system;
           modules = [
             {
-              packages = with self.packages.${system}; [
-                adawallet
-                bech32
-                cardano-address
-                cardano-cli
-                cardano-hw-cli
-                cc-sign
-                (pkgs system).cryptsetup
-                disko
-                orchestrator-cli
-                qemu-run-iso
-                tx-bundle
-                # Until binary blobs are addressed and ventoy is set back to OSS license
-                # (pkgs-system).ventoy-full
-              ];
+              packages =
+                (with self.packages.${system}; [
+                  adawallet
+                  bech32
+                  cardano-address
+                  cardano-cli
+                  cardano-hw-cli
+                  cardano-signer
+                  cc-sign
+                  disko
+                  orchestrator-cli
+                  qemu-run-iso
+                  tx-bundle
+                  # Until binary blobs are addressed and ventoy is set back to OSS license
+                  # (pkgs-system).ventoy-full
+                ])
+                ++ (with (pkgs system); [
+                  cryptsetup
+                  python3Packages.ipython
+                  tinyxxd
+                ]);
 
               # https://devenv.sh/reference/options/
               languages.nix.enable = true;

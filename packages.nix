@@ -11,7 +11,7 @@ in rec {
   inherit (self.inputs.disko.packages.${system}) disko;
 
   # Cardano-cli should remain version matched to adawallet to avoid wrapper errors
-  inherit (self.inputs.adawallet.packages.${system}) adawallet cardano-address cardano-cli cardano-hw-cli;
+  inherit (self.inputs.adawallet.packages.${system}) adawallet cardano-address cardano-cli cardano-hw-cli cardano-signer;
 
   bech32 = capkgs.bech32-input-output-hk-cardano-node-10-4-1-420c94f;
 
@@ -138,9 +138,11 @@ in rec {
       echo "  cardano-address"
       echo "  cardano-cli"
       echo "  cardano-hw-cli"
+      echo "  cardano-signer"
       echo "  cc-sign"
       echo "  cfssl"
       echo "  format-airgap-data"
+      echo "  ipython"
       echo "  menu"
       echo "  openssl"
       echo "  orchestrator-cli"
@@ -151,6 +153,7 @@ in rec {
       echo "  step"
       echo "  tx-bundle"
       echo "  unmount-airgap-data"
+      echo "  xxd"
     '';
   };
 
