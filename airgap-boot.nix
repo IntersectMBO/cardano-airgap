@@ -67,6 +67,7 @@ in {
         cardano-address
         cardano-cli
         cardano-hw-cli
+        cardano-signer
         cc-sign
         disko
         format-airgap-data
@@ -79,19 +80,24 @@ in {
         shutdown
       ]
       ++ (with pkgs; [
+        ccid
         cfssl
         cryptsetup
         glibc
         adwaita-icon-theme
         gnupg
+        python3Packages.ipython
         jq
         lvm2
         neovim
         openssl
+        pcsc-tools
+        pinentry-all
         pwgen
         smem
         sqlite-interactive
         step-cli
+        tinyxxd
         usbutils
         util-linux
       ]);
@@ -230,6 +236,8 @@ in {
 
   services = {
     displayManager.autoLogin.user = lib.mkForce airgapUser;
+
+    pcscd.enable = true;
 
     udev.extraRules = ''
       # Ledger rules, source: https://github.com/LedgerHQ/udev-rules/blob/master/20-hw1.rules
