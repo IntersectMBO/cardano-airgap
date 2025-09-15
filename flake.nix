@@ -7,7 +7,7 @@
     # nixpkgs-unstable.url = "github:NixOS/nixpkgs/nixos-unstable";
 
     # Required image signing tooling
-    credential-manager.url = "github:IntersectMBO/credential-manager";
+    credential-manager.url = "github:IntersectMBO/credential-manager/0.1.5.0";
 
     # For easy language and hook support
     devenv.url = "github:cachix/devenv/v1.6.1";

@@ -41,7 +41,7 @@ in {
 
     kernelModules = ["kvm-intel"];
 
-    supportedFilesystems = ["zfs"];
+    supportedFilesystems = ["zfs" "exfat"];
 
     # To address build time warn
     swraid.enable = lib.mkForce false;
