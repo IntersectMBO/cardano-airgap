@@ -19,6 +19,10 @@
     airgapUserGroup
     prodImage
     ;
+
+  kernelVersion = config.boot.kernelPackages.kernel.version;
+  nvidiaVersion = config.boot.kernelPackages.nvidiaPackages.stable.version;
+  nouveauVersion = pkgs.mesa.version;
 in {
   imports = [(modulesPath + "/installer/cd-dvd/installation-cd-graphical-gnome.nix")];
 
@@ -58,6 +62,9 @@ in {
       # "signing-tool-config.json".source = builtins.toFile "signing-tool-config.json" (builtins.toJSON {
       #   inherit documentsDir secretsDir;
       # });
+
+      # Nvidia license required for inclusion with closed source driver
+      "nvidia/LICENSE".source = "${pkgs.linuxPackages.nvidia_x11}/share/doc/nvidia/LICENSE";
     };
 
     systemPackages = with self.packages.${system};
@@ -113,7 +120,41 @@ in {
     nerd-fonts.fira-code
   ];
 
+  specialisation = let
+    mkNvidiaCfg = isOpenDriver: {
+      boot.blacklistedKernelModules = ["nouveau"];
+
+      hardware.nvidia = {
+        modesetting.enable = true;
+        open = isOpenDriver;
+      };
+
+      isoImage.configurationName = "NVIDIA (${
+        if isOpenDriver
+        then "open"
+        else "prop"
+      }, ${nvidiaVersion}), Linux ${kernelVersion}";
+
+      services.xserver.videoDrivers = ["nvidia"];
+    };
+  in {
+    nouveau-modeset.configuration = {
+      boot = {
+        kernelParams = ["nouveau.modeset=0"];
+        blacklistedKernelModules = ["nouveau"];
+      };
+
+      isoImage.configurationName = "Nouveau (nomodeset, ${nouveauVersion}), Linux ${kernelVersion}";
+    };
+
+    nvidia-open.configuration = mkNvidiaCfg true;
+    nvidia-closed.configuration = mkNvidiaCfg false;
+  };
+
   isoImage = {
+    appendToMenuLabel = " --";
+    configurationName = lib.mkDefault "Generic video, Linux ${kernelVersion}";
+
     # Making a hardlink of bzImage, initrd/initrd and /init at the ISO FS root,
     # as well as setting a static volume ID will ensure external grub booting of
     # the ISO can be done.
