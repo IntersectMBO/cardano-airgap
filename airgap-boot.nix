@@ -335,7 +335,7 @@ in {
 
         "org/gnome/desktop/lockdown" = {
           disable-lock-screen = true;
-          disable-log-out = true;
+          disable-log-out = false;
           disable-user-switching = true;
         };
 
