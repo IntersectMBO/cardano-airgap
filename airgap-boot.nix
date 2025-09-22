@@ -370,7 +370,7 @@ in {
         };
 
         "org/gnome/shell" = {
-          welcome-dialog-last-shown-version = "41.2";
+          welcome-dialog-last-shown-version = "${toString pkgs.gdm.version}";
         };
       };
     }
