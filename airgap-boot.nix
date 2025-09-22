@@ -321,6 +321,10 @@ in {
   programs.dconf.profiles.user.databases = [
     {
       settings = {
+        "org/gnome/Console" = {
+          last-window-maximised = true;
+        };
+
         "org/gnome/desktop/background" = {
           color-shading-type = "solid";
           picture-options = "zoom";
