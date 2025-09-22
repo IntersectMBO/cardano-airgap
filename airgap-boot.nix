@@ -87,13 +87,13 @@ in {
         shutdown
       ]
       ++ (with pkgs; [
+        adwaita-icon-theme
         ccid
         cfssl
         cryptsetup
+        dconf-editor
         glibc
-        adwaita-icon-theme
         gnupg
-        python3Packages.ipython
         jq
         lvm2
         neovim
@@ -101,6 +101,7 @@ in {
         pcsc-tools
         pinentry-all
         pwgen
+        python3Packages.ipython
         smem
         sqlite-interactive
         step-cli
@@ -317,55 +318,59 @@ in {
     Hidden=false
   '';
 
-  systemd.user.services.dconf-defaults = {
-    script = let
-      dconfDefaults = pkgs.writeText "dconf.defaults" ''
-        [org/gnome/desktop/background]
-        color-shading-type='solid'
-        picture-options='zoom'
-        picture-uri='${./cardano.png}'
-        primary-color='#000000000000'
-        secondary-color='#000000000000'
+  programs.dconf.profiles.user.databases = [
+    {
+      settings = {
+        "org/gnome/desktop/background" = {
+          color-shading-type = "solid";
+          picture-options = "zoom";
+          picture-uri = "${./cardano.png}";
+          primary-color = "#000000000000";
+          secondary-color = "#000000000000";
+        };
 
-        [org/gnome/desktop/lockdown]
-        disable-lock-screen=true
-        disable-log-out=true
-        disable-user-switching=true
+        "org/gnome/desktop/lockdown" = {
+          disable-lock-screen = true;
+          disable-log-out = true;
+          disable-user-switching = true;
+        };
 
-        [org/gnome/desktop/notifications]
-        show-in-lock-screen=false
+        "org/gnome/desktop/notifications" = {
+          show-in-lock-screen = false;
+        };
 
-        [org/gnome/desktop/screensaver]
-        color-shading-type='solid'
-        lock-delay=uint32 0
-        lock-enabled=false
-        picture-options='zoom'
-        picture-uri='${./cardano.png}'
-        primary-color='#000000000000'
-        secondary-color='#000000000000'
+        "org/gnome/desktop/screensaver" = {
+          color-shading-type = "solid";
+          lock-delay = lib.gvariant.mkUint32 0;
+          lock-enabled = false;
+          picture-options = "zoom";
+          picture-uri = "${./cardano.png}";
+          primary-color = "#000000000000";
+          secondary-color = "#000000000000";
+        };
 
-        [org/gnome/settings-daemon/plugins/media-keys]
-        custom-keybindings=['/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom0/']
+        "org/gnome/settings-daemon/plugins/media-keys" = {
+          custom-keybindings = ["/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom0/"];
+        };
 
-        [org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom0]
-        binding='<Primary><Alt>t'
-        command='kgx'
-        name='console'
+        "org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom0" = {
+          binding = "<Primary><Alt>t";
+          command = "kgx";
+          name = "console";
+        };
 
-        [org/gnome/settings-daemon/plugins/power]
-        idle-dim=false
-        power-button-action='interactive'
-        sleep-inactive-ac-type='nothing'
+        "org/gnome/settings-daemon/plugins/power" = {
+          idle-dim = false;
+          power-button-action = "interactive";
+          sleep-inactive-ac-type = "nothing";
+        };
 
-        [org/gnome/shell]
-        welcome-dialog-last-shown-version='41.2'
-      '';
-    in ''
-      ${pkgs.dconf}/bin/dconf load / < ${dconfDefaults}
-    '';
-    wantedBy = ["graphical-session.target"];
-    partOf = ["graphical-session.target"];
-  };
+        "org/gnome/shell" = {
+          welcome-dialog-last-shown-version = "41.2";
+        };
+      };
+    }
+  ];
 
   users = {
     allowNoPasswordLogin = true;
