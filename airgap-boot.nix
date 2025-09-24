@@ -94,10 +94,13 @@ in {
         dconf-editor
         glibc
         gnupg
+        gnutar
+        gzip
         jq
         lvm2
         neovim
         openssl
+        p7zip
         pcsc-tools
         pinentry-all
         pwgen
@@ -106,8 +109,13 @@ in {
         sqlite-interactive
         step-cli
         tinyxxd
+        tmux
+        unzip
         usbutils
         util-linux
+        xz
+        yubikey-manager
+        zip
       ]);
 
     variables = {
