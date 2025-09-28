@@ -19,6 +19,10 @@
     airgapUserGroup
     prodImage
     ;
+
+  kernelVersion = config.boot.kernelPackages.kernel.version;
+  nvidiaVersion = config.boot.kernelPackages.nvidiaPackages.stable.version;
+  nouveauVersion = pkgs.mesa.version;
 in {
   imports = [(modulesPath + "/installer/cd-dvd/installation-cd-graphical-gnome.nix")];
 
@@ -58,6 +62,9 @@ in {
       # "signing-tool-config.json".source = builtins.toFile "signing-tool-config.json" (builtins.toJSON {
       #   inherit documentsDir secretsDir;
       # });
+
+      # Nvidia license required for inclusion with closed source driver
+      "nvidia/LICENSE".source = "${pkgs.linuxPackages.nvidia_x11}/share/doc/nvidia/LICENSE";
     };
 
     systemPackages = with self.packages.${system};
@@ -80,26 +87,35 @@ in {
         shutdown
       ]
       ++ (with pkgs; [
+        adwaita-icon-theme
         ccid
         cfssl
         cryptsetup
+        dconf-editor
         glibc
-        adwaita-icon-theme
         gnupg
-        python3Packages.ipython
+        gnutar
+        gzip
         jq
         lvm2
         neovim
         openssl
+        p7zip
         pcsc-tools
         pinentry-all
         pwgen
+        python3Packages.ipython
         smem
         sqlite-interactive
         step-cli
         tinyxxd
+        tmux
+        unzip
         usbutils
         util-linux
+        xz
+        yubikey-manager
+        zip
       ]);
 
     variables = {
@@ -113,7 +129,41 @@ in {
     nerd-fonts.fira-code
   ];
 
+  specialisation = let
+    mkNvidiaCfg = isOpenDriver: {
+      boot.blacklistedKernelModules = ["nouveau"];
+
+      hardware.nvidia = {
+        modesetting.enable = true;
+        open = isOpenDriver;
+      };
+
+      isoImage.configurationName = "NVIDIA (${
+        if isOpenDriver
+        then "open"
+        else "prop"
+      }, ${nvidiaVersion}), Linux ${kernelVersion}";
+
+      services.xserver.videoDrivers = ["nvidia"];
+    };
+  in {
+    nouveau-modeset.configuration = {
+      boot = {
+        kernelParams = ["nouveau.modeset=0"];
+        blacklistedKernelModules = ["nouveau"];
+      };
+
+      isoImage.configurationName = "Nouveau (nomodeset, ${nouveauVersion}), Linux ${kernelVersion}";
+    };
+
+    nvidia-open.configuration = mkNvidiaCfg true;
+    nvidia-closed.configuration = mkNvidiaCfg false;
+  };
+
   isoImage = {
+    appendToMenuLabel = " --";
+    configurationName = lib.mkDefault "Generic video, Linux ${kernelVersion}";
+
     # Making a hardlink of bzImage, initrd/initrd and /init at the ISO FS root,
     # as well as setting a static volume ID will ensure external grub booting of
     # the ISO can be done.
@@ -276,55 +326,63 @@ in {
     Hidden=false
   '';
 
-  systemd.user.services.dconf-defaults = {
-    script = let
-      dconfDefaults = pkgs.writeText "dconf.defaults" ''
-        [org/gnome/desktop/background]
-        color-shading-type='solid'
-        picture-options='zoom'
-        picture-uri='${./cardano.png}'
-        primary-color='#000000000000'
-        secondary-color='#000000000000'
+  programs.dconf.profiles.user.databases = [
+    {
+      settings = {
+        "org/gnome/Console" = {
+          last-window-maximised = true;
+        };
 
-        [org/gnome/desktop/lockdown]
-        disable-lock-screen=true
-        disable-log-out=true
-        disable-user-switching=true
+        "org/gnome/desktop/background" = {
+          color-shading-type = "solid";
+          picture-options = "zoom";
+          picture-uri = "${./cardano.png}";
+          primary-color = "#000000000000";
+          secondary-color = "#000000000000";
+        };
 
-        [org/gnome/desktop/notifications]
-        show-in-lock-screen=false
+        "org/gnome/desktop/lockdown" = {
+          disable-lock-screen = true;
+          disable-log-out = false;
+          disable-user-switching = true;
+        };
 
-        [org/gnome/desktop/screensaver]
-        color-shading-type='solid'
-        lock-delay=uint32 0
-        lock-enabled=false
-        picture-options='zoom'
-        picture-uri='${./cardano.png}'
-        primary-color='#000000000000'
-        secondary-color='#000000000000'
+        "org/gnome/desktop/notifications" = {
+          show-in-lock-screen = false;
+        };
 
-        [org/gnome/settings-daemon/plugins/media-keys]
-        custom-keybindings=['/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom0/']
+        "org/gnome/desktop/screensaver" = {
+          color-shading-type = "solid";
+          lock-delay = lib.gvariant.mkUint32 0;
+          lock-enabled = false;
+          picture-options = "zoom";
+          picture-uri = "${./cardano.png}";
+          primary-color = "#000000000000";
+          secondary-color = "#000000000000";
+        };
 
-        [org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom0]
-        binding='<Primary><Alt>t'
-        command='kgx'
-        name='console'
+        "org/gnome/settings-daemon/plugins/media-keys" = {
+          custom-keybindings = ["/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom0/"];
+        };
 
-        [org/gnome/settings-daemon/plugins/power]
-        idle-dim=false
-        power-button-action='interactive'
-        sleep-inactive-ac-type='nothing'
+        "org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom0" = {
+          binding = "<Primary><Alt>t";
+          command = "kgx";
+          name = "console";
+        };
 
-        [org/gnome/shell]
-        welcome-dialog-last-shown-version='41.2'
-      '';
-    in ''
-      ${pkgs.dconf}/bin/dconf load / < ${dconfDefaults}
-    '';
-    wantedBy = ["graphical-session.target"];
-    partOf = ["graphical-session.target"];
-  };
+        "org/gnome/settings-daemon/plugins/power" = {
+          idle-dim = false;
+          power-button-action = "interactive";
+          sleep-inactive-ac-type = "nothing";
+        };
+
+        "org/gnome/shell" = {
+          welcome-dialog-last-shown-version = "${toString pkgs.gdm.version}";
+        };
+      };
+    }
+  ];
 
   users = {
     allowNoPasswordLogin = true;
