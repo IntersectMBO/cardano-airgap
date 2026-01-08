@@ -1,7 +1,6 @@
 {
   inputs = {
-    # Nixpkgs 25.05 for latest gnome image and devenv hooks
-    nixpkgs.url = "github:NixOS/nixpkgs/nixos-25.05";
+    nixpkgs.url = "github:NixOS/nixpkgs/nixos-25.11";
 
     # For latest package versions when required
     # nixpkgs-unstable.url = "github:NixOS/nixpkgs/nixos-unstable";

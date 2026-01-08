@@ -13,7 +13,7 @@ in rec {
   # Cardano-cli should remain version matched to adawallet to avoid wrapper errors
   inherit (self.inputs.adawallet.packages.${system}) adawallet cardano-address cardano-cli cardano-hw-cli cardano-signer;
 
-  bech32 = capkgs.bech32-input-output-hk-cardano-node-10-4-1-420c94f;
+  bech32 = capkgs.bech32-input-output-hk-cardano-node-10-5-3-6c034ec;
 
   default = iso;
 
