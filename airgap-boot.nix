@@ -7,6 +7,7 @@
   system,
   ...
 }: let
+  inherit (lib) getExe mkDefault mkForce mkIf warn;
   inherit
     (self.imageParameters)
     etcFlakePath
@@ -23,6 +24,11 @@
   kernelVersion = config.boot.kernelPackages.kernel.version;
   nvidiaVersion = config.boot.kernelPackages.nvidiaPackages.stable.version;
   nouveauVersion = pkgs.mesa.version;
+
+  # A trimmed down disko airgap set of dependencies per:
+  # https://github.com/nix-community/disko/blob/master/docs/disko-install.md
+  dependencies = [(self.nixosConfigurations.airgap-boot.pkgs.closureInfo {rootPaths = [];}).drvPath];
+  closureInfo = pkgs.closureInfo {rootPaths = dependencies;};
 in {
   imports = [(modulesPath + "/installer/cd-dvd/installation-cd-graphical-gnome.nix")];
 
@@ -48,13 +54,16 @@ in {
     supportedFilesystems = ["zfs" "exfat"];
 
     # To address build time warn
-    swraid.enable = lib.mkForce false;
+    swraid.enable = mkForce false;
   };
 
   documentation.info.enable = false;
 
   environment = {
     etc = {
+      # Include store paths in the ISO required for airgap disko script running
+      "install-closure".source = "${closureInfo}/store-paths";
+
       # Embed this flake source in the iso to re-use the disko or other configuration
       ${etcFlakePath}.source = self.outPath;
 
@@ -162,7 +171,7 @@ in {
 
   isoImage = {
     appendToMenuLabel = " --";
-    configurationName = lib.mkDefault "Generic video, Linux ${kernelVersion}";
+    configurationName = mkDefault "Generic video, Linux ${kernelVersion}";
 
     # Making a hardlink of bzImage, initrd/initrd and /init at the ISO FS root,
     # as well as setting a static volume ID will ensure external grub booting of
@@ -208,7 +217,7 @@ in {
 
     # Disable squashfs for testing only
     # Set the flake.nix `imageParameters.prodImage = true;` when ready to build the distribution image to use image compression
-    squashfsCompression = lib.mkIf (!prodImage) ((lib.warn "Generating a testing only ISO with compression disabled") null);
+    squashfsCompression = mkIf (!prodImage) ((warn "Generating a testing only ISO with compression disabled") null);
   };
 
   nix = {
@@ -219,7 +228,7 @@ in {
 
     nixPath = ["nixpkgs=${pkgs.path}"];
     settings = {
-      substituters = lib.mkForce [];
+      substituters = mkForce [];
       trusted-users = [airgapUser];
     };
   };
@@ -229,17 +238,17 @@ in {
   networking = {
     inherit hostId hostName;
 
-    enableIPv6 = lib.mkForce false;
-    interfaces = lib.mkForce {};
-    networkmanager.enable = lib.mkForce false;
-    useDHCP = lib.mkForce false;
-    wireless.enable = lib.mkForce false;
+    enableIPv6 = mkForce false;
+    interfaces = mkForce {};
+    networkmanager.enable = mkForce false;
+    useDHCP = mkForce false;
+    wireless.enable = mkForce false;
   };
 
   programs = {
     bash = {
       completion.enable = true;
-      interactiveShellInit = lib.getExe self.packages.${system}.menu;
+      interactiveShellInit = getExe self.packages.${system}.menu;
     };
 
     fzf = {
@@ -285,7 +294,7 @@ in {
   };
 
   services = {
-    displayManager.autoLogin.user = lib.mkForce airgapUser;
+    displayManager.autoLogin.user = mkForce airgapUser;
 
     pcscd.enable = true;
 
