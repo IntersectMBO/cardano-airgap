@@ -46,3 +46,11 @@ disko -m destroy,format,mount --dry-run -f .#airgap-data --argstr device "$YOUR_
 # If satisfied with the dry run script, proceed with the formatting:
 sudo disko -m destroy,format,mount -f .#airgap-data --argstr device "$YOUR_AIRGAP_DATA_DRIVE"
 ```
+
+## Releases
+
+GitHub releases of `cardano-airgap` can make use of the `iso-versioning` script
+available from both the devShell and within the ISO CLI to generate a markdown
+table of versioned components.  The generated versioning table can be included
+in release descriptions, PR descriptions, etc.  The devShell can be entered via
+`nix develop` or `direnv allow` if direnv is installed.

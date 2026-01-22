@@ -13,7 +13,7 @@
     devenv.inputs.nixpkgs.follows = "nixpkgs";
 
     # For declarative block device provisioning
-    disko.url = "github:nix-community/disko";
+    disko.url = "github:nix-community/disko/v1.13.0";
     disko.inputs.nixpkgs.follows = "nixpkgs";
 
     # A single address wallet that supports mnemonics and hardware wallets
@@ -78,6 +78,7 @@
                   cardano-signer
                   cc-sign
                   disko
+                  iso-versioning
                   orchestrator-cli
                   qemu-run-iso
                   tx-bundle
