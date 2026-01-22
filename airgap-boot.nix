@@ -22,12 +22,12 @@
     ;
 
   kernelVersion = config.boot.kernelPackages.kernel.version;
-  nvidiaVersion = config.boot.kernelPackages.nvidiaPackages.stable.version;
   nouveauVersion = pkgs.mesa.version;
+  nvidiaVersion = config.boot.kernelPackages.nvidiaPackages.stable.version;
 
   # A trimmed down disko airgap set of dependencies per:
   # https://github.com/nix-community/disko/blob/master/docs/disko-install.md
-  dependencies = [(self.nixosConfigurations.airgap-boot.pkgs.closureInfo {rootPaths = [];}).drvPath];
+  dependencies = [(pkgs.closureInfo {rootPaths = [];}).drvPath];
   closureInfo = pkgs.closureInfo {rootPaths = dependencies;};
 in {
   imports = [(modulesPath + "/installer/cd-dvd/installation-cd-graphical-gnome.nix")];
@@ -87,6 +87,7 @@ in {
         cc-sign
         disko
         format-airgap-data
+        iso-versioning
         menu
         orchestrator-cli
         # Deprecated: signing-tool

@@ -1,10 +1,16 @@
 self: system: let
-  inherit (self.imageParameters) documentsDir etcFlakePath secretsDir;
-  inherit (self.lib) filter hasSuffix head;
   inherit (builtins) attrNames readDir;
+  inherit (self.imageParameters) documentsDir etcFlakePath secretsDir;
+  inherit (self.lib) filter getExe getExe' hasSuffix head version;
+  inherit (self.nixosConfigurations) airgap-boot;
 
   pkgs = self.inputs.nixpkgs.legacyPackages.${system};
   capkgs = self.inputs.capkgs.packages.${system};
+
+  gnomeVersion = airgap-boot.pkgs.gnome-shell.version;
+  kernelVersion = airgap-boot.config.boot.kernelPackages.kernel.version;
+  nouveauVersion = pkgs.mesa.version;
+  nvidiaVersion = airgap-boot.config.boot.kernelPackages.nvidiaPackages.stable.version;
 in rec {
   # Inputs packages, collected here for easier re-use throughout the flake
   inherit (self.inputs.credential-manager.packages.${system}) cc-sign orchestrator-cli tx-bundle;
@@ -103,7 +109,7 @@ in rec {
   };
 
   iso = let
-    inherit (self.nixosConfigurations.airgap-boot.config.system.build) isoImage;
+    inherit (airgap-boot.config.system.build) isoImage;
 
     isoName' = head (filter
       (p: hasSuffix ".iso" p)
@@ -143,6 +149,7 @@ in rec {
       echo "  cfssl"
       echo "  format-airgap-data"
       echo "  ipython"
+      echo "  iso-versioning"
       echo "  menu"
       echo "  openssl"
       echo "  orchestrator-cli"
@@ -259,4 +266,96 @@ in rec {
       echo "then it is safe to remove the airgap-data device."
     '';
   };
+
+  iso-versioning =
+    pkgs.writers.makeScriptWriter {
+      interpreter = "${pkgs.nushell}/bin/nu";
+    } "/bin/iso-versioning" ''
+      let specs = [
+        {
+          name: "NixOS"
+          get_ver: "${version}"
+          parser: { $in }
+        }
+        {
+          name: "Linux"
+          get_ver: "${kernelVersion}"
+          parser: { $in }
+        }
+        {
+          name: "Gnome"
+          get_ver: "${gnomeVersion}"
+          parser: { $in }
+        }
+        {
+          name: "Nouveau"
+          get_ver: "${nouveauVersion}"
+          parser: { $in }
+        }
+        {
+          name: "Nvidia"
+          get_ver: "${nvidiaVersion}"
+          parser: { $in }
+        }
+        {
+          name: "adawallet"
+          get_ver: { ${getExe adawallet} --version }
+          parser: { parse "Ada Wallet {v}" | get v.0 }
+        }
+        {
+          name: "cardano-address"
+          get_ver: { ${getExe cardano-address} --version }
+          parser: { parse "{v} {_}" | get v.0 }
+        }
+        {
+          name: "cardano-cli"
+          get_ver: { ${getExe cardano-cli} --version }
+          parser: { parse "cardano-cli {v} {_}" | get v.0 }
+        }
+        {
+          name: "cardano-hw-cli"
+          get_ver: { ${getExe cardano-hw-cli} version }
+          parser: { parse --regex 'Cardano HW CLI Tool version ([0-9\.]+)' | get capture0.0 }
+        }
+        {
+          name: "cardano-signer"
+          get_ver: { ${getExe' cardano-signer "cardano-signer"} --version }
+          parser: { parse "cardano-signer {v}" | get v.0 }
+        }
+        {
+          name: "cc-sign"
+          get_ver: { ${getExe cc-sign} --version }
+          parser: { parse "cc-sign {v}" | get v.0 }
+        }
+        {
+          name: "orchestrator-cli"
+          get_ver: { ${getExe orchestrator-cli} --version }
+          parser: { parse "orchestrator-cli {v}" | get v.0 }
+        }
+        {
+          name: "disko"
+          get_ver: { ${getExe disko} --version }
+          parser: { $in }
+        }
+        {
+          name: "tx-bundle"
+          get_ver: { ${getExe tx-bundle} --version }
+          parser: { parse "tx-dynamic {v}" | get v.0 }
+        }
+      ]
+
+      $specs | each { |it|
+        let raw = (match ($it.get_ver | describe) {
+          "closure" => (do $it.get_ver | complete | get stdout | str trim)
+          _         => $it.get_ver
+        })
+
+        let version = ($raw | do $it.parser)
+
+        {
+            "Component": $it.name
+            "Version": $version
+        }
+      } | to md --pretty | str replace -ra '(-)(-{3,})(-)' ':$2:'
+    '';
 }

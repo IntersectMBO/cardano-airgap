@@ -78,6 +78,7 @@
                   cardano-signer
                   cc-sign
                   disko
+                  iso-versioning
                   orchestrator-cli
                   qemu-run-iso
                   tx-bundle
