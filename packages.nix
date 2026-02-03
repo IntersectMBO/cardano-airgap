@@ -19,6 +19,9 @@ in rec {
   # Cardano-cli should remain version matched to adawallet to avoid wrapper errors
   inherit (self.inputs.adawallet.packages.${system}) adawallet cardano-address cardano-cli cardano-hw-cli cardano-signer;
 
+  # Midnight CLI
+  inherit (self.inputs.midnight-cli.packages.${system}) midnight-cli;
+
   bech32 = capkgs.bech32-input-output-hk-cardano-node-10-5-3-6c034ec;
 
   default = iso;
@@ -151,6 +154,7 @@ in rec {
       echo "  ipython"
       echo "  iso-versioning"
       echo "  menu"
+      echo "  midnight-cli"
       echo "  openssl"
       echo "  orchestrator-cli"
       echo "  pwgen"

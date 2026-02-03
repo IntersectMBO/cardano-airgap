@@ -89,6 +89,7 @@ in {
         format-airgap-data
         iso-versioning
         menu
+        midnight-cli
         orchestrator-cli
         # Deprecated: signing-tool
         # signing-tool-with-config

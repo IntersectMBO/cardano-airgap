@@ -19,6 +19,9 @@
     # A single address wallet that supports mnemonics and hardware wallets
     adawallet.url = "github:input-output-hk/adawallet";
 
+    # Midnight CLI for Midnight blockchain operations
+    midnight-cli.url = "github:disassembler/midnight-cli";
+
     # For fetch-closure shrunk release packages with minimal eval time and dependency sizes
     # Currently x86_64-linux only
     capkgs.url = "github:input-output-hk/capkgs";
@@ -79,6 +82,7 @@
                   cc-sign
                   disko
                   iso-versioning
+                  midnight-cli
                   orchestrator-cli
                   qemu-run-iso
                   tx-bundle
